@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "dbhub": {
+      "command": "volta",
+      "args": [
+        "run",
+        "--node",
+        "20.20.2",
+        "--",
+        "npx",
+        "-y",
+        "@bytebase/dbhub",
+        "--config",
+        "D:/0-caoshi/dbhub.toml"
+      ]
+    }
+  }
+}

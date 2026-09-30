@@ -1,0 +1,36 @@
+# ==========================================================
+# AI 工作区配置仓库 —— 白名单模式
+# 本仓库只保存 AI 编码环境配置（换主机克隆后即可快速恢复）。
+# 业务代码、子仓库、工具、视频、文档一律不入库；
+# 根目录下新增的任何内容默认忽略，无需在此登记。
+# ==========================================================
+
+# 默认忽略根目录下一切条目
+/*
+
+# ---- 允许纳入的配置与文档 ----
+!/.gitignore
+!/CLAUDE.md
+!/AGENTS.md
+!/Agent团队.md
+!/目录详解-0-SvcCode与0-Web_Code.md
+!/.ignore
+!/.mcp.json
+!/.claude/
+
+# ---- .claude 内的本地/运行时文件 ----
+.claude/settings.local.json
+.claude/hooks/.state/
+
+# ---- 含密钥，永不提交 ----
+dbhub.toml
+
+# ---- 通用保险 ----
+node_modules/
+target/
+dist/
+*.log
+*.bak*
+tmpclaude-*
+Thumbs.db
+Desktop.ini

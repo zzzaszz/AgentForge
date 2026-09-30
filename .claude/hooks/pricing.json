@@ -1,0 +1,27 @@
+{
+  "_说明": "工作日志「费用」列的单价表。单位：元 / 每百万 token。三个 token 类别：inputMiss=缓存未命中输入（含写入缓存）、inputHit=缓存命中输入、output=输出。取值写数字即视为高峰价、空闲价自动折半；也可写 {\"peak\": N, \"off\": M} 显式指定两档。任一类缺失则该行费用记 '-'。aliases 是该模型的其它叫法（transcript 里可能出现旧模型名）。",
+  "currency": "¥",
+
+  "_peak说明": "高峰时段：北京时间周一至周五 9:00-12:00、14:00-18:00，其余为空闲。ranges 为左闭右开区间，故 12:00 整算空闲。weekdays 用 0=周日…6=周六。",
+  "peakHours": {
+    "utcOffsetHours": 8,
+    "weekdays": [1, 2, 3, 4, 5],
+    "ranges": [[9, 12], [14, 18]]
+  },
+
+  "models": {
+    "deepseek-v4-flash": {
+      "_说明": "旧模型名仍可调用，由 DeepSeek-V4.1-Flash 提供服务并按 Flash 价计费",
+      "aliases": ["deepseek-flash", "deepseek-v4-flash-vision-exp"],
+      "inputHit": { "peak": 0.04, "off": 0.02 },
+      "inputMiss": { "peak": 2, "off": 1 },
+      "output": { "peak": 8, "off": 4 }
+    },
+    "deepseek-v4-pro": {
+      "aliases": ["deepseek-pro"],
+      "inputHit": { "peak": 0.30, "off": 0.15 },
+      "inputMiss": { "peak": 9.0, "off": 4.5 },
+      "output": { "peak": 27.0, "off": 13.5 }
+    }
+  }
+}

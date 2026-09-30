@@ -1,0 +1,63 @@
+# ripgrep 忽略规则（Claude Code 的 Grep/Glob 也会读取）
+# 本目录不是 git 仓库，.gitignore 不生效，故用 .ignore 兜住搜索性能
+
+# 依赖与构建产物
+node_modules/
+dist/
+build/
+target/
+out/
+.nuxt/
+.output/
+.vercel/
+unpackage/
+coverage/
+
+# 工具与运行时
+.repository/
+repository/
+runtimes/
+*.min.js
+*.min.css
+
+# IDE / 系统
+.idea/
+.vscode/
+*.iml
+*.suo
+*.user
+
+# Claude 临时目录
+tmpclaude-*-cwd/
+
+# 大体积二进制/压缩包
+*.exe
+*.zip
+*.7z
+*.rar
+*.dll
+*.pdb
+*.so
+*.dylib
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.svg
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+*.doc
+*.docx
+*.pdf
+*.mp4
+*.flv
+*.ttf
+*.woff
+*.woff2
+
+# 教学视频目录（与业务无关）
+1、基于Flutter3.x实战跨平台短视频App混合开发【推荐】/
+3、Flutter高级进阶实战 仿哔哩哔哩APP【实战课】/
