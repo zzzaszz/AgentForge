@@ -337,7 +337,7 @@ mvn clean package -DskipTests
 
 ## 6. 高频陷阱（照抄踩过的坑）
 
-1. **本目录不是 Git 仓库**，各子项目各自独立 Git（内网 `git.inksdev.com`）。根目录下的 `/review`、diff 类流程不适用，需 `cd` 进具体仓库。
+1. **根目录 `D:\0-caoshi` 本身是一个 Git 仓库**（remote `AgentForge.git`，只跟踪 AI 配置与文档），各子项目各自独立 Git（内网 `git.inksdev.com`）。改业务代码须 `cd` 进具体仓库，根目录下的 `/review`、diff 类流程只对根仓库自身有效。
 2. **`mf-mg\mg-*` 子目录常为空**（submodule 未初始化），别在那找业务代码。
 3. **`web2\0-wkspace\` 不是临时目录**，内含活跃仓库，勿当垃圾清理。
 4. **后端改动必须重新编译部署才生效**。排查问题时先确认跑的不是旧包——报文/接口与当前代码对不上，多半是这个问题。

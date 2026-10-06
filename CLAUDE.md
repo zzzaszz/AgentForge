@@ -202,11 +202,12 @@ mvn clean package -DskipTests
 
 ## 5. 注意事项
 
-- 本目录**不是 Git 仓库**，各子项目各自独立 Git（内网 GitLab `git.inksdev.com` / `192.168.99.92`）；因此根目录下的 `/review`、diff 类流程不适用，需 `cd` 进具体仓库。
+- 根目录 `D:\0-caoshi` 本身**是一个 Git 仓库**（remote `AgentForge.git`，2026-10-06 实测仅 1 个提交 `初始化AI工作区配置`，跟踪的是 AI 配置与文档，不含业务代码），各子项目又各自独立 Git（内网 GitLab `git.inksdev.com` / `192.168.99.92`）；因此改业务代码仍须 `cd` 进具体仓库，根目录的 `/review`、diff 类流程只对根仓库自身（配置/文档）有效。
 - 前端目录普遍含巨量 `node_modules`（已装约 34 处）。根目录 `.ignore` 已配置 ripgrep 忽略规则（`node_modules/`、`target/`、`dist/`、`.nuxt/` 等），**新增忽略项请改这个文件**。
-- `.claude\settings.json` 已配置只读命令白名单，并禁止 `git reset --hard` / `git clean` / `git checkout --`。`git commit` / `git push` **既不在白名单、也不在禁止列表**——执行时必弹权限确认，因此无法私自提交推送。该文件另注册了工作日志 hook（见下条）。
+- `.claude\settings.json` 已配置只读命令白名单；deny 硬禁止 `git reset --hard` / `git clean` / `git checkout --` / `git restore` / `git push --force` / `git push -f`，以及对盘根目录的 `rm -rf`。2026-09-30 起 `node -e` / `rm` / `git commit` / `git push` 已从 ask 列表移除，改由 auto 模式判断——**这不等于已获授权**：推送前仍须明确要求，规则见本文件下方「Git 提交/推送规则」。该文件另注册了工作日志 hook（见下条）。
 - **修改代码前先拉取**（2026-09-30 用户确认）：每个涉及改代码的任务，动手前先在目标仓库检查 `git status` 与当前分支，工作区干净才 `git pull`；有未提交改动、冲突风险或拉取到新内容时，先向用户说明再继续（各子仓库独立 Git，需 `cd` 进对应仓库）。
-- **通用行为与安全约束在根目录 `AGENTS.md`**（Claude 与 Codex 共用）：执行权限分级（L1 只读 / L2 可逆修改 / L3 高风险逐项确认）、数据库默认只读、修改前检查清单、证据与假设管理、测试与验证要求、多产品线兼容性保护。改代码、查数据库前按需读取，本文件不重复正文。
+- **通用行为与安全约束在根目录 `AGENTS.md`**（Claude 与 Codex 共用）：执行权限分级（L1 只读 / L2 可逆修改 / L3 高风险逐项确认）、数据库默认只读、修改前检查清单、证据与假设管理、测试与验证要求、多产品线兼容性保护，以及自动化脚本清单。改代码、查数据库前按需读取，本文件不重复正文。
+- **自动化检查脚本在 `.claude\scripts\`**（node，已入命令白名单）：改代码前跑 `pre-change-check.js`，改完跑 `verify-change.js`，推送前跑 `final-review.js`，跨仓定位用 `repo-map.js`；公共逻辑在 `lib.js`，检查逻辑只有这一份，不要在对话里另写一套。
 - **Git 提交/推送规则**（未经用户明确要求，绝不提交、绝不推送）：
   1. 只 `git add` 本次任务相关文件，不回滚用户已有改动。
   2. **提交信息风格**（2026-09-19 用户确认，各仓库通用）：

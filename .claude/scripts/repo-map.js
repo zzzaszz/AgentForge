@@ -14,7 +14,7 @@
  * rg 不可用时退化为 git grep（仅候选仓库场景）；全库搜索必须 rg，否则提示安装。
  */
 
-const { execFileSync, spawnSync } = require("child_process");
+const { spawnSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const { ROOT, DOMAIN_MAP, git } = require("./lib");
@@ -23,17 +23,18 @@ function hasRg() {
   return !spawnSync("rg", ["--version"], { encoding: "utf8" }).error;
 }
 
-/** rg 搜内容：-n 带行号、-m 2 每文件最多 2 条（定位足够）；exit 1 = 无命中，不是错误 */
+/**
+ * rg 搜内容：-n 带行号、-m 2 每文件最多 2 条（定位足够）。
+ * 为什么用 spawnSync 而不是 execFileSync：仓库里有历史遗留的 `nul` 保留名文件，
+ * rg 读它报 os error 1 后整体 exit 2——execFileSync 会把**已产生的命中 stdout 连带丢掉**
+ * （实测 TargetHours 场景：手动 rg 有命中、脚本却报无命中）。spawnSync 直接取 stdout，
+ * 退出码无关紧要；stderr 一并捕获，不再污染终端。
+ */
 function rgSearch(pattern, dirs) {
-  try {
-    const out = execFileSync("rg", ["-n", "-i", "-m", "2", pattern, ...dirs], {
-      encoding: "utf8", maxBuffer: 64 * 1024 * 1024,
-    });
-    return out.trim().split("\n").filter(Boolean);
-  } catch (e) {
-    if (e.status === 1) return [];
-    throw e;
-  }
+  const r = spawnSync("rg", ["-n", "-i", "-m", "2", "-g", "!**/nul", pattern, ...dirs], {
+    encoding: "utf8", maxBuffer: 64 * 1024 * 1024,
+  });
+  return (r.stdout || "").trim().split("\n").filter(Boolean);
 }
 
 /** 拆 rg 输出行 `路径:行号:内容`；路径用非贪婪避免盘符冒号误切 */
@@ -91,12 +92,7 @@ function main() {
     ? cands.map((c) => c.dir)
     : [path.join(ROOT, "0-Web_Code"), path.join(ROOT, "0-SvcCode")];
   console.log(`实搜范围: ${searchDirs.length} 个目录（尊重根 .ignore，node_modules/target/dist 已排除）`);
-  let hits;
-  try {
-    hits = rgSearch(kw, searchDirs);
-  } catch {
-    hits = [];
-  }
+  const hits = rgSearch(kw, searchDirs);
 
   if (!hits.length) {
     console.log("实搜: 无命中（若关键词是接口路径，注意前端可能拼接 URL，换片段再搜）");
