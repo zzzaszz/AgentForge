@@ -28,7 +28,7 @@
 
 | 场景触发 | 读哪个 |
 |---|---|
-| **做「单元格可编辑」的表格——标准样式在文档第 7 节，照抄即可**（ve-table 列表页、单元格内嵌下拉/时间选择、表格高度塌缩、列设置 SetColums） | `.claude\knowledge\ve-table-and-list.md` |
+| **做「单元格可编辑」的表格——标准样式在文档第 7 节，照抄即可**（ve-table 列表页、单元格内嵌下拉/时间选择、表格高度塌缩、列设置 SetColums）；**单元格内嵌下拉点击后整格上移/文字被裁——看第 8 节**（内嵌控件的列不能开 overflow） | `.claude\knowledge\ve-table-and-list.md` |
 | 附件上传/预览/下载、字段级单文件反向关联附件 | `.claude\knowledge\file-upload-preview.md` |
 | 云打印 printWebBill、锐浪 Grid++Report 报文、打印次数 | `.claude\knowledge\cloud-print.md` |
 | 子表打印不出来 / 只有表头没有行 / 锐浪模板表名排查 | 先读 `.claude\knowledge\cloud-print.md` 的「坑④」，再看 `cloud-print-subreport-case.md`（E09M06B1 各版本对照） |
@@ -36,6 +36,7 @@
 | **卡片右上角"角标"（状态斜角标）——"角标"默认指这套样式，先读再动手** | `.claude\knowledge\card-corner-badge.md` |
 | **pad 端数量输入/虚拟数字键盘（numpad）——排列固定 4 列，三种现成实现照抄，先读再动手** | `.claude\knowledge\pad-numpad-keyboard.md` |
 | **写后端"异步任务 + 前端轮询"接口、新增 Controller 接口或 mapper 方法——三段式标准样板照抄，四条编码规范先读再动手** | `.claude\knowledge\backend-async-polling.md` |
+| **表格要显示货品 SKU/SPU 属性（attributejson）、"SKU 显示""货品属性列"——标准做法照抄，列必须常驻（即使当前页无数据），先读再动手** | `.claude\knowledge\sku-attribute-columns.md` |
 | **动手改代码之前**（尤其：同一问题被反复返工、改日期/时间显示、写"改数据后刷新 UI"的逻辑）——内含动手前检查清单 | `.claude\knowledge\lessons-and-pitfalls.md` |
 
 ---
