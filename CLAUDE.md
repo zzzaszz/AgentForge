@@ -199,6 +199,18 @@ mvn clean package -DskipTests
 - `OMS\` 与 `svc-oem\` 的 `inks-service-*` 为 Spring Boot 2.5.3 / 2.7.18。
 - 打印/单据相关改动必须**重新编译部署**才生效，排查问题先确认跑的不是旧包。
 
+### 4.4 k3s 流水线打包（192.168.99.61:30880）
+
+用户说「帮我打包 XX」时，按 `.claude\knowledge\k3s-pipeline-run.md` 执行，不要重新摸索——认证加密算法、可用 API 路径、触发四步、已知坑、仓库↔流水线映射全在里面（2026-11-05 实测）。凭据在根目录 `k3s-流水线凭据.md`（含账号密码，已列入 `.gitignore`，永不提交；不回显、不写入其它文件或环境变量）。
+
+**只允许运行流水线**（2026-11-05 用户确认）。允许：换 token、列 DevOps 项目与流水线、查流水线详情、触发运行、查运行状态、只读查部署结果。禁止：修改或删除流水线定义、改 Jenkinsfile 或 `deploy-*.yaml`、`kubectl apply/delete/patch`、删除 PipelineRun、改用户权限、停他人构建，以及任何其它集群写操作。
+
+本集群「运行」按钮背后的 `POST /kapis/devops.kubesphere.io/v1alpha3/.../pipelines/{name}/run` 返回 404，等价写法是创建 `PipelineRun` 资源（`POST /apis/devops.kubesphere.io/v1alpha3/namespaces/{ns}/pipelineruns`，先用 `?dryRun=All` 校验）；这是唯一允许的写操作，**只建不删**。
+
+触发前回报五项：项目 / 流水线真实名 / 分支 / 影响范围（是否走部署段、目标 namespace）/ 预计镜像 tag，确认后再发。**流水线最后一段是自动部署到 dev，不得表述为"只是打个包"。**
+
+**推送完成后**：任何 `git push` 成功后，主动询问是否需要触发对应流水线打包（映射见手册第 6 节），**不得自行触发**。
+
 ---
 
 ## 5. 注意事项
@@ -210,7 +222,7 @@ mvn clean package -DskipTests
 - **通用行为与安全约束在根目录 `AGENTS.md`**（Claude 与 Codex 共用）：执行权限分级（L1 只读 / L2 可逆修改 / L3 高风险逐项确认）、数据库默认只读、修改前检查清单、证据与假设管理、测试与验证要求、多产品线兼容性保护，以及自动化脚本清单。改代码、查数据库前按需读取，本文件不重复正文。
 - **自动化检查脚本在 `.claude\scripts\`**（node，已入命令白名单）：改代码前跑 `pre-change-check.js`，改完跑 `verify-change.js`，推送前跑 `final-review.js`，跨仓定位用 `repo-map.js`；公共逻辑在 `lib.js`，检查逻辑只有这一份，不要在对话里另写一套。
 - **Git 提交/推送规则**（未经用户明确要求，绝不提交、绝不推送）：
-  1. 只 `git add` 本次任务相关文件，不回滚用户已有改动。
+  1. **不自动 `git add`**（2026-10-10 用户确认）：修改代码后保持工作区原样（改动留在 unstaged），仅当用户明确要求提交时，才 `git add` 本次任务相关文件；不使用 `git add -A` / `git add .`，不回滚用户已有改动。
   2. **提交信息风格**（2026-09-19 用户确认，各仓库通用）：
      - **无前缀**——不用 `fix:` / `feat:` 等 conventional 前缀，纯中文；
      - 常规格式为「文件名/模块 + 中文描述」，如 `SYSM06B1/SYSM01B7四处接口getLoginUser改为tid为空时才调用，Feign内部无token调用不再异常`；

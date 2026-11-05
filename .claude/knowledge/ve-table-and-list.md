@@ -337,3 +337,61 @@ const TextCell = {
 - [ ] 面板有 `appendToBody` + `popper-class`，且样式在**非 scoped** 块里
 - [ ] 单元格内容用 `TextCell` 之类的响应式组件，**全文没有 `keynum += 1` 重建表格**
 - [ ] 值变化后不需要刷新别处时，不要动 `columns` / `table-data` 的引用
+
+---
+
+## 8. 内嵌控件的列**不能开 `overflow`（ellipsis）**——点击后整格上移、文字上半截被裁（2026-10-06 D11M22B1 实测）
+
+> 现象：单元格里嵌了下拉控件的列（§4 的透明覆盖层枚举列、§7 的可编辑列），**点击展开时整格内容整体上移**，文字上半截被裁掉，且**不会自行复位**。
+> 极易误判成"下拉样式问题"或"popper 定位问题"——**和下拉组件本身无关**，换成可见 el-select 一样复现。
+
+### 根因：`overflow: hidden` 同时是一个可编程滚动容器
+
+列配置写了 `overflow: 1`，ve-table 会把该格内容再包一层（`ve-table/src/body/body-td.jsx`）：
+
+```html
+<span class="ve-table-body-td-span-ellipsis" style="-webkit-line-clamp:1;"> …格子内容… </span>
+```
+
+对应 CSS（`vue-easytable/libs/theme-default/ve-table.css`，`.ve-table-body-td .ve-table-body-td-span-ellipsis`）：
+
+```css
+overflow: hidden;
+display: -webkit-box;
+-webkit-box-orient: vertical;
+```
+
+于是：
+
+1. 点击格子 → 外层 div 程序化 `document.getElementById(id).click()`（§4 的唤起机制）；
+2. el-select 的 `toggleMenu()` 内部会 `this.$refs.input.focus()`（`element-ui/packages/select/src/select.vue`）；
+3. 浏览器要把刚获得焦点的 input 滚进可视区，**最近的滚动祖先恰好是这个 `overflow:hidden` 的 line-clamp 盒**（`overflow:hidden` 的元素 `scrollTop` 可写、可被 `scrollIntoView` 滚动，不只是"裁剪"）；
+4. 它被滚动 → 整格内容上移 → 被自身 `overflow:hidden` 裁掉上半截 → `scrollTop` 停在那儿，**不复位**。
+
+只"点击那一刻"出现、且与用什么下拉组件无关，就是因为触发点是 **focus**，不是渲染。
+
+### 规避
+
+- 该列 `overflow` 写 `0`，不要 `1`。文字省略交给可见内容层自己做（`overflow:hidden;white-space:nowrap;text-overflow:ellipsis`）。
+- 再加一道兜底：`initTable` 里对内嵌控件的列**强制**关掉 ellipsis，防止列设置（SetColums）或后端元数据（CiMetaData，见 §5）把 `overflow` 又打开：
+
+```js
+const NO_ELLIPSIS_COLUMNS = ["softwarename", "status"];
+// initTable 内
+ellipsis: item.overflow && NO_ELLIPSIS_COLUMNS.indexOf(item.itemcode) == -1 ? { showTitle: true } : false,
+```
+
+- 代价：该列失去 ve-table 的 `title` 悬停提示（影响很小）。
+
+### 配套：单元格垂直居中
+
+同一格往往还有"行盒撑高"这个相邻问题——ve-table 主题里 `tr.ve-table-body-tr { height: 40px }`、`td.ve-table-body-td { height: inherit; overflow: hidden }`，而 el-select 是 inline-block、按 `vertical-align: baseline` 对齐会产生比控件本身更高的行盒，超出部分同样被裁。加上：
+
+```scss
+::v-deep .ve-table-body-td {
+  padding: 2px 0;
+  vertical-align: middle;   /* 表格单元格用 vertical-align 控制内容在行内垂直居中 */
+}
+```
+
+**排查顺序**：先看该列 `overflow` 是否开着（本节 · `scrollTop` 位移），再看行盒是否被撑高（vertical-align）。两者都表现为"文字被裁"，但成因和修法不同。

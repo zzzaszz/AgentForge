@@ -24,8 +24,8 @@ tools: Read, Grep, Glob, Bash, TodoWrite
 
 ## Git 规则（本工作区强制）
 
-1. **未经用户明确要求，绝不提交、绝不推送。** 用户说「推送」才推，说「提交」才提交。
-2. 只 `git add` 本次任务相关文件。不使用 `git add -A` / `git add .`。
+1. **未经用户明确要求，绝不 `git add`、绝不提交、绝不推送。** 修改代码后改动留在工作区（unstaged），用户说「提交/推送」才走 add → commit 流程。
+2. add 时只加本次任务相关文件。不使用 `git add -A` / `git add .`。
 3. **不回滚用户已有改动**。禁止 `git reset --hard`、`git clean`、`git checkout --`（`settings.json` 已拒绝，不要试图绕过）。
 4. **提交信息风格**（各仓库通用）：
    - **无前缀**——不用 `fix:` / `feat:` 等 conventional 前缀，纯中文；

@@ -51,6 +51,19 @@
 
 `DB\` 目录的客户现场 SQL 脚本同样遵守：脚本只生成或修改，不擅自代跑。
 
+## k3s 流水线操作（凭据与约束）
+
+涉及 `192.168.99.61` 的 KubeSphere 流水线操作时：
+
+- **执行手册**：`.claude\knowledge\k3s-pipeline-run.md`（认证算法、可用 API 路径、触发四步、已知坑、仓库↔流水线映射，全部为实测结论）。动手前先读，不要重新摸索。
+- **凭据**：根目录 `k3s-流水线凭据.md` 的「一、填写区」。该文件含账号密码，已列入 `.gitignore`「含密钥，永不提交」段；**不得把它加入 `!` 放行规则，不得 `git add`**。不回显密码、不写入其它文件或环境变量、token 只存内存。
+- **只允许运行流水线**（2026-11-05 用户确认）：允许做的事只有——换 token、列 DevOps 项目/流水线、查流水线详情、触发运行、查运行状态、只读查部署结果；禁止修改或删除流水线定义、改 Jenkinsfile / `deploy-*.yaml`、`kubectl apply/delete/patch`、删除 PipelineRun、改权限、停他人构建，以及任何其它集群写操作。触发运行在本集群的等价写法是创建一个 `PipelineRun` 资源（`/apis/devops.kubesphere.io/v1alpha3/namespaces/{ns}/pipelineruns`），这是允许的唯一写操作，且只建不删。
+- **触发前回报五项**：项目 / 流水线真实名 / 分支 / 影响范围（是否走部署段、目标 namespace）/ 预计镜像 tag，得到确认再发。
+- 流水线五个 stage：拉代码 → 编译 → podman 构建镜像 → 推送 `hub.inksyun.com/inksdev/*` → `kubectl apply` 到 dev（`inksdev-mf` 等）。**最后一段是自动部署，跑流水线即发布**，触发前必须讲明，不得表述为"只是打个包"。
+- **推送后询问打包**：任何 `git push` 成功后，主动问用户是否需要触发对应流水线打包（映射表见手册第 6 节），**不得自行触发**。
+
+方案背景与对比见 `文档/2026/k3s流水线自动执行方案.html`。
+
 ## 修改前检查
 
 开始修改前必须：
@@ -186,14 +199,13 @@ DSH（DeepSeek Harness）不复用 Claude / Codex 的任何配置文件，等价
 | 项目指令 | 根 `CLAUDE.md` | 同样是根 `AGENTS.md` / `CLAUDE.md`（DSH 两者都加载，内容重复时去重） |
 | 权限 | `.claude\settings.json` 的 allow / ask / deny 逐命令白名单 | **无法逐命令照搬**：DSH 是「沙箱模式 + 审批策略」两旋钮组成的预设，配置在 `C:\Users\inks07\.dsh\profiles\desktop\cordis.patch.yml`，由客户端 Permissions 选择器切换 |
 | MCP | `.mcp.json` | 同一个 profile 文件里的 `@deepseek-ai/dsh-mcp-client` 条目（已接入 dbhub） |
-| 生命周期 hook | `.claude\hooks\work-log.js`（UserPromptSubmit / Stop） | **官方无等价 hook**，不自动写 `工作日志.md`；主 Agent 收尾时手工按既有格式追加 |
+| 生命周期 hook | `.claude\hooks\work-log.js`（UserPromptSubmit / Stop） | **官方无等价 hook**，也**不写 `工作日志.md`**：DSH 中的工作不入该文件（2026-10-16 用户确认） |
 | 项目技能 / 脚本 | `.claude\scripts\` + `.claude\agents\` | `.dsh\skills\`（DSH 自动发现，`<name>/SKILL.md`），脚本仍共用 `.claude\scripts\` 一份实现 |
 
 DSH 侧权限三档与本文「执行权限分级」对应：`只读（L1）` / `工作区写入（L2）` / `完全访问（L3）`。**预设只约束文件写入边界，不区分具体命令**，所以 L3 里的「写数据库、删除、推送」仍靠指令约束逐项确认，不能指望预设拦住。
 
-## 工作日志与问题记录（跨工具手工维护）
+## 工作日志与问题记录
 
-DSH 没有 hook，`工作日志.md` 与 `测试问题记录.md` 改为收尾时手工补记，格式沿用既有约定，不要另起体例：
+`工作日志.md` 由 Claude 侧 hook 自动维护，**DSH 会话不写入该文件**（2026-10-16 用户确认：DSH 中的工作不入 `工作日志.md`）。`测试问题记录.md` 仍按需手工补记，格式沿用既有约定，不要另起体例：
 
-- `工作日志.md`：按天表格追加一行（时间 / 任务 / 涉及 / 结果 / 耗时 / tokens / 费用），当天表格下方保留一行小字合计。用量三列 Claude 侧由 hook 回读 transcript 统计，DSH 侧取不到时记 `-`，不要编数字。
 - `测试问题记录.md`：新记录追加在「新记录追加到这里下方」之后，按日期倒序；每条含现象 / 复现 / 证据 / 代码定位 / 状态，状态取值见该文件表格。
