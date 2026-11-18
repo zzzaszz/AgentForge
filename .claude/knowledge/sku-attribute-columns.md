@@ -18,6 +18,7 @@
 
 - **属性定义可能已被删除**：实测库存数据里有 `spuwaijing/spunajing/spugaodu` 的值，但 `getListByShow` 已无定义——没有兜底列这些值就无处显示。
 - **别和货品自定义字段混用**：`custjson` 是另一套，key 翻译走 `/goods/D91M01S4/getListByShow`（字段名 `custkey`/`custname`），与 SPU 属性的 D91M01S2 不是同一接口。
+- **k1038 pad 例外（2026-11-18 用户要求，与通用兜底标准相反）**：`mf-cuspad-k1038-sale` 的 `E09/D05P07M1` 领料弹窗动态列、工单信息属性网格**只以定义接口存在的 key 生成列/显示**，数据中有、接口中没有的 key（如 spubangjing）不兜底；且排除 `cumizhong/cuchangdu/spuzhishu` 三个 key（已做成可编辑输入列，数量=米重*长度*支数）。显示过滤用 computed，原始 json 不动（换算取值依赖原始数据）。此页面勿按通用标准恢复兜底列。
 
 ## 已落地实例（照抄）
 
