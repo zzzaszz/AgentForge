@@ -33,6 +33,7 @@
 | 云打印 printWebBill、锐浪 Grid++Report 报文、打印次数 | `.claude\knowledge\cloud-print.md` |
 | 子表打印不出来 / 只有表头没有行 / 锐浪模板表名排查 | 先读 `.claude\knowledge\cloud-print.md` 的「坑④」，再看 `cloud-print-subreport-case.md`（E09M06B1 各版本对照） |
 | E09 系列 formEdit.vue 保存子表、`getParam` | `.claude\knowledge\vue2-form-save.md` |
+| **设计/改 Vue2 微应用编辑(edit)页面表头——第一行最多 3 个 span5（多了挡右上角 BillState），下面每行最多 4 个 span5；billdate/refno 不重复显示；日期字段默认 today；备注/经办人/创建人审核人放 formTemp/index.js 的 footer；editItem 子表与列表页表格内容默认居中；operate.js 只放删除/中止作废，不放打印审核（外层 EditGroupBtns 已有）；列表和编辑页的日期字段统一 dateFormat 格式化；列表枚举/状态/是否审核与 edit 页下拉口径一致（中文 label、el-tag）——先读再动手** | `.claude\knowledge\edit-page-layout.md` |
 | **卡片右上角"角标"（状态斜角标）——"角标"默认指这套样式，先读再动手** | `.claude\knowledge\card-corner-badge.md` |
 | **pad 端数量输入/虚拟数字键盘（numpad）——排列固定 4 列，三种现成实现照抄，先读再动手** | `.claude\knowledge\pad-numpad-keyboard.md` |
 | **写后端"异步任务 + 前端轮询"接口、新增 Controller 接口或 mapper 方法——三段式标准样板照抄，四条编码规范先读再动手** | `.claude\knowledge\backend-async-polling.md` |
@@ -199,18 +200,6 @@ mvn clean package -DskipTests
 - `OMS\` 与 `svc-oem\` 的 `inks-service-*` 为 Spring Boot 2.5.3 / 2.7.18。
 - 打印/单据相关改动必须**重新编译部署**才生效，排查问题先确认跑的不是旧包。
 
-### 4.4 k3s 流水线打包（192.168.99.61:30880）
-
-用户说「帮我打包 XX」时，按 `.claude\knowledge\k3s-pipeline-run.md` 执行，不要重新摸索——认证加密算法、可用 API 路径、触发四步、已知坑、仓库↔流水线映射全在里面（2026-11-05 实测）。凭据在根目录 `k3s-流水线凭据.md`（含账号密码，已列入 `.gitignore`，永不提交；不回显、不写入其它文件或环境变量）。
-
-**只允许运行流水线**（2026-11-05 用户确认）。允许：换 token、列 DevOps 项目与流水线、查流水线详情、触发运行、查运行状态、只读查部署结果。禁止：修改或删除流水线定义、改 Jenkinsfile 或 `deploy-*.yaml`、`kubectl apply/delete/patch`、删除 PipelineRun、改用户权限、停他人构建，以及任何其它集群写操作。
-
-本集群「运行」按钮背后的 `POST /kapis/devops.kubesphere.io/v1alpha3/.../pipelines/{name}/run` 返回 404，等价写法是创建 `PipelineRun` 资源（`POST /apis/devops.kubesphere.io/v1alpha3/namespaces/{ns}/pipelineruns`，先用 `?dryRun=All` 校验）；这是唯一允许的写操作，**只建不删**。
-
-触发前回报五项：项目 / 流水线真实名 / 分支 / 影响范围（是否走部署段、目标 namespace）/ 预计镜像 tag，确认后再发。**流水线最后一段是自动部署到 dev，不得表述为"只是打个包"。**
-
-**推送完成后**：任何 `git push` 成功后，主动询问是否需要触发对应流水线打包（映射见手册第 6 节），**不得自行触发**。
-
 ---
 
 ## 5. 注意事项
@@ -230,6 +219,7 @@ mvn clean package -DskipTests
      - 跟随该仓库既有风格，历史提交均为纯中文无前缀。
   3. 用户要求推送时**先拉取、再推送**：先执行 `git pull`（或 `git fetch` 后确认差异）。
   4. **若拉取到新内容**（远端有新提交、或产生合并/冲突），**必须先向用户说明**——拉到了哪些提交、是否冲突、如何处理——确认后再 `git push`。
+  5. **提交/推送不派子代理**（2026-11-18 用户确认）：git 提交、推送相关操作直接在主会话执行，不使用 repo-shipper 等子代理；其余规则（点名 add、纯中文信息、先 pull、新内容先说明）照常适用。
 - **工作日志**：根目录 `工作日志.md` 自动记录每次工作（时间/任务/涉及/结果/耗时/tokens/费用，每天表格下方一行小字合计）。由 `.claude\hooks\work-log.js` 实现，挂在 `UserPromptSubmit` + `Stop` 两个事件上，两段式——前者暂存用户请求与 transcript 行号，后者消费并追加一行后删除暂存，因此**每个请求最多一行**。脚本用 node。注意 `Stop` 是每轮响应触发而非会话结束。
   - 用量三列靠 Stop 时回读 transcript 统计。**该 JSONL 格式为 internal、随版本变化，但此处是唯一数据源**，故解析逻辑集中在 `sumTurn()` / `scanFile()` 两个函数里；若某天这三列集体记 `-`，先怀疑 transcript 结构变了，看这两处而非全文件。已知必须处理的两点：同一 `message.id` 会拆成多行且每行带相同 `usage`（**必须去重**），子代理用量在 `<session>/subagents/*.jsonl` 而非主文件。
   - 费用单价表在 `.claude\hooks\pricing.json`（Flash / Pro 两个模型，含旧模型名别名）。**高峰/空闲分档**：高峰为北京时间周一至周五 9-12、14-18 点，空闲价 = 高峰价一半，配置里只写高峰价即自动折半；判档逐条按消息自身时间戳做，跨时段的长轮次不会被整轮一刀切。时段规则在 `peakHours` 段，改它不用动脚本。模型没配价则记 `-`。「时间」列带档位标记 `峰`/`谷`/`峰谷`（跨档），与费用列同源，二者永远一致。
