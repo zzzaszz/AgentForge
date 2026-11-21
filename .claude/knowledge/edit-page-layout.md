@@ -10,7 +10,7 @@
 - `label-width: 100px`；**标签不加页面级覆盖**（不写 `font-size/font-weight` 去覆盖默认 14px；全局已有 `label { font-weight: 700 }`，各微应用一致）。
 - **第一行最多 3 个 `<el-col :span="5">`**。页面右上角叠着 `BillState` + `BillStatusBar`，第一行放 4 个会遮挡状态栏和单据编号。
 - **第二行起每行最多 4 个 `<el-col :span="5">`**。
-- 所有行统一 `span=5`，不要和 `span=6/9/12` 混排，否则右侧边界参差、行高不一致。
+- 所有行统一 `span=5`，不要和 `span=6/9/12` 混排，否则右侧边界参差、行高不一致。**checkbox 列也用 span5**，不用 span3 窄列（2026-11-21 确认，D06M12/M13/M19/M22 实改）。例外只有三种：textarea / checkbox-group 等长内容行用 `span="24"` 全宽；页脚 foot 行用 `col: 4`；带响应式 `xs/sm/md` 的混排列改 span5 时**连同响应式属性一起删**（标准页均为纯 span5）。
 - 内容较长的字段同样用单行 `el-input` + `size="small"`；确需多行才用 textarea，但要接受该行高度被拉高。
 - **分组标题用 el-divider 带文字**（2026-11-21 确认，基准 D91M01B1）：`<el-divider content-position="left">分组名</el-divider>`，divider 用默认间距（theme-chalk `margin: 24px 0`），**不加页面级 margin 覆盖**。自绘 `.form-section-title` div 写法**已废弃**（仅存量旧页面还有，坑见 §11）。
 - **标题行不用蓝色字体**（2026-11-21 确认）：页面标题 `formTitle` 沿用全局灰（common.scss `#555`），分组标题走 el-divider 默认样式，不用 `#409eff`。
