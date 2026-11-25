@@ -33,9 +33,10 @@
 | 云打印 printWebBill、锐浪 Grid++Report 报文、打印次数 | `.claude\knowledge\cloud-print.md` |
 | 子表打印不出来 / 只有表头没有行 / 锐浪模板表名排查 | 先读 `.claude\knowledge\cloud-print.md` 的「坑④」，再看 `cloud-print-subreport-case.md`（E09M06B1 各版本对照） |
 | E09 系列 formEdit.vue 保存子表、`getParam` | `.claude\knowledge\vue2-form-save.md` |
-| **设计/改 Vue2 微应用编辑(edit)页面表头——第一行最多 3 个 span5（多了挡右上角 BillState），下面每行最多 4 个 span5；billdate/refno 不重复显示；日期字段默认 today；备注/经办人/创建人审核人放 formTemp/index.js 的 footer；editItem 子表与列表页表格内容默认居中；operate.js 只放删除/中止作废，不放打印审核（外层 EditGroupBtns 已有）；列表和编辑页的日期字段统一 dateFormat 格式化；列表枚举/状态/是否审核与 edit 页下拉口径一致（中文 label、el-tag）——先读再动手** | `.claude\knowledge\edit-page-layout.md` |
+| **设计/改 Vue2 微应用编辑(edit)页面表头——第一行最多 3 个 span5（多了挡右上角 BillState），下面每行最多 4 个 span5；billdate/refno 不重复显示；日期字段默认 today；备注/经办人/创建人审核人放 formTemp/index.js 的 footer；editItem 子表与列表页表格内容默认居中；operate.js 只放删除/中止作废，不放打印审核（外层 EditGroupBtns 已有）；列表和编辑页的日期字段统一 dateFormat 格式化；列表枚举/状态/是否审核与 edit 页下拉口径一致（中文 label、el-tag）——先读再动手**；**编辑页顶部加操作类按钮——放进「操作」下拉（operate.js 的 operateBar + formEdit.vue 同名方法），不在 EditGroupBtns 旁加独立 el-button；showcontent 控制按钮区、clickMethods 分发、formstate 0新增/1编辑、前端不写权限判断见 §6** | `.claude\knowledge\edit-page-layout.md` |
 | **卡片右上角"角标"（状态斜角标）——"角标"默认指这套样式，先读再动手** | `.claude\knowledge\card-corner-badge.md` |
 | **pad 端数量输入/虚拟数字键盘（numpad）——排列固定 4 列，三种现成实现照抄，先读再动手** | `.claude\knowledge\pad-numpad-keyboard.md` |
+| **数量/金额相减出现长尾小数（0.30000000000000004）、要展示或回传"需求-已领""总投-完成-MRB"等差值、数量默认两位小数——先读再动手** | `.claude\knowledge\number-precision.md` |
 | **写后端"异步任务 + 前端轮询"接口、新增 Controller 接口或 mapper 方法——三段式标准样板照抄，四条编码规范先读再动手** | `.claude\knowledge\backend-async-polling.md` |
 | **表格要显示货品 SKU/SPU 属性（attributejson）、"SKU 显示""货品属性列"——标准做法照抄，列必须常驻（即使当前页无数据），先读再动手** | `.claude\knowledge\sku-attribute-columns.md` |
 | **动手改代码之前**（尤其：同一问题被反复返工、改日期/时间显示、写"改数据后刷新 UI"的逻辑）——内含动手前检查清单 | `.claude\knowledge\lessons-and-pitfalls.md` |
