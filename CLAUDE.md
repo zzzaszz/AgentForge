@@ -29,6 +29,7 @@
 | 场景触发 | 读哪个 |
 |---|---|
 | **做「单元格可编辑」的表格——标准样式在文档第 7 节，照抄即可**（ve-table 列表页、单元格内嵌下拉/时间选择、表格高度塌缩、列设置 SetColums）；**单元格内嵌下拉点击后整格上移/文字被裁——看第 8 节**（内嵌控件的列不能开 overflow） | `.claude\knowledge\ve-table-and-list.md` |
+| **列表页要做搜索/高级搜索/常用场景——一律用后端场景搜索：`Scene` + `SearchForm` 全局组件 + `$search`/`$advancedSearch`，条件走 `scenedata`/`searchdata` 由后端 `getAllFilter()` 转 SQL；**不要自己写 el-form 拼 SearchPojo**（字段硬编码必失效），先读再动手 | `.claude\knowledge\list-page-search.md` |
 | 附件上传/预览/下载、字段级单文件反向关联附件 | `.claude\knowledge\file-upload-preview.md` |
 | 云打印 printWebBill、锐浪 Grid++Report 报文、打印次数 | `.claude\knowledge\cloud-print.md` |
 | 子表打印不出来 / 只有表头没有行 / 锐浪模板表名排查 | 先读 `.claude\knowledge\cloud-print.md` 的「坑④」，再看 `cloud-print-subreport-case.md`（E09M06B1 各版本对照） |
