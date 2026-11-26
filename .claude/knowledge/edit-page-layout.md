@@ -159,13 +159,20 @@ editItem 子表的固定枚举字段（变更类别 `itemtype`、影响程度 `i
 - 显示层用响应式组件按 value 映射中文 label，下拉值变化时单元格自行刷新，不要 `keynum += 1` 重建整表
 - 结构与 `renderOverlayCell` 写法直接照抄该文档第 7 节
 
-## 6. operate.js 操作栏约定
+## 6. 顶部按钮区（EditGroupBtns）与 operate.js 操作栏
 
-`components/formTemp/operate.js` 的 `operateBar` 只放**业务操作**：
+**操作类按钮的标准落点是「操作」下拉，不要放独立 el-button**（2026-11-24 确认，D91M01B1「先进先出」返工）：在 `EditGroupBtns` 旁边另加 `el-button` 是错误写法。新增一个业务操作只动两处——`components/formTemp/operate.js` 的 `operateBar` 加一项 + `formEdit.vue` 加同名 `methods` 方法，不改公共组件。
+
+`operateBar` 只放**业务操作**：
 
 - **不放打印、审核**：这两项已由 formEdit 外层的 `EditGroupBtns` 提供，`@approval="approval"`、`@printButton="$refs.PrintServer.printButton(0, 1)"` 已在组件上绑定，重复配置会出现两个入口。
 - **删除通常放这里**，依赖 `formstate` 控制可用状态。
 - **中止/作废/恢复/开启** 统一用「中止单据...」父项 + `children` 四项，`methods` 都是 `discontinue`，`param` 分别为 1 作废 / 2 恢复 / 3 中止 / 4 开启（对应 `formEdit.vue` 的 `discontinue(type)`）。
+
+菜单项结构（operate.js 文件头注释）：`show` 是否显示 / `divided` 是否加切割线 / `label` 名称 / `icon` 图标 / `disabled` 禁用条件 / `methods` 方法名 / `param` 参数 / `children` 二级菜单。两条要点：
+
+- **`disabled` 是字符串表达式**（如 `"this.formstate!=1"`），由 `EditGroupBtns` 内部 `returnEval` 执行，不是布尔值。
+- **`formstate` 约定：0=新增态、1=编辑态**。需要已保存数据（有 id）的操作用 `"this.formstate!=1"`（照抄「删 除」项）；只在新增态可用的用 `"this.formstate!==0"`（照抄「引入货品」项）。
 
 ```js
 export const operateBar = [
@@ -197,11 +204,24 @@ export const operateBar = [
 export const processBar = [];
 ```
 
+**点击分发机制**：operateBar / processBar 的项不直接绑事件。`EditGroupBtns` 把点击包装成 `clickMethods({meth, param})` emit 出来，由 formEdit.vue 统一接收执行：
+
+```js
+// formEdit.vue
+clickMethods(val) {
+  // param 为简单参数，例如 1、0、true、false
+  this[val.meth](val.param);
+},
+```
+
+所以新增操作项只需 operateBar 加一项（`methods` 写方法名字符串）+ formEdit.vue 里加同名方法；`param` 只支持简单参数，复杂逻辑在方法内部自理。
+
 外层 `EditGroupBtns`（不需要在 operate.js 重复配置的项）：
 
 ```vue
 <EditGroupBtns
   ref="EditGroupBtns"
+  :showcontent="['save', 'print', 'operate', 'process']"
   :formdata="formdata"
   :operate-bar="operateBar"
   :process-bar="processBar"
@@ -214,6 +234,11 @@ export const processBar = [];
   @clickMethods="clickMethods"
 />
 ```
+
+- `EditGroupBtns` 是全局公共组件（`@inksyun/webcomp` 提供），formEdit.vue 里**不 import、不注册**，直接用标签。
+- `:showcontent` 控制顶部显示哪些区，取值 `save / approval / print / operate / process`，按页面需要取舍：主单据页四区 `['save', 'print', 'operate', 'process']`（D91M01B1 实值）；简单子表只留 `['save', 'operate']`（如 D91M01S2/S4）。
+
+**前端按钮不判断权限**（多次确认的偏好）：不写 `hasPermi` / `v-permission` 之类的权限指令或 `v-if` 权限判断，按钮可用性只按业务状态（`formstate` 等）控制，权限统一由后端 `@PreAuthorize` 拦截。
 
 ## 7. 审核 / 反审核
 
@@ -353,3 +378,60 @@ renderStatusTag(val) {
 - [ ] 复制 §1 表头模板时，确认没给 `el-form` 顺手加 `size`
 - [ ] 新增/调整分组标题后实测两段间隙（输入框底 → 标题顶应 ≥ 20px），不凭肉眼判断
 - [ ] 无登录态时的实测办法：用项目 `node_modules` 里的 `vue/dist/vue.min.js` + `element-ui/lib/index.js` + `theme-chalk/index.css` 搭离线对照页（问题版/修复版同页渲染），起仅绑定 `127.0.0.1` 的静态服务后用 Playwright 量矩形差；playwright MCP 禁 `file://` 协议，必须走 http
+
+## 12. Dialog 形式的编辑弹窗默认规格（2026-11-26 确认）
+
+子表/明细的「添加 / 编辑」用 `el-dialog` 承载 `formEdit.vue` 时，默认统一为：
+
+```vue
+<el-dialog
+  :destroy-on-close="true"
+  :title="'原因分析'"
+  v-if="formvisible"
+  :visible.sync="formvisible"
+  width="40%"
+  top="10vh"
+  :append-to-body="true"
+  :close-on-click-modal="false"
+>
+  <FormEdit :idx="idx" ... />
+</el-dialog>
+```
+
+- **宽度 `40%`、`top="10vh"` 是默认值**，不要再用 `500px`、`60%` 或 `40vw` 各写一套；确实字段多的页面再单独调宽，但不要低于 40%。
+- 表格弹窗内容区 `max-height: 78vh; overflow-y: auto`，避免行数多时撑出屏幕。
+- 表单 `label-width: 100px`；字段每行两个 `el-col :span="12"`，行上 `:gutter="20"`。
+- **行距用 Element 默认的表单项 22px，不要套整页编辑页的 `.el-row { margin-bottom: -20px }`**——那是为整页 4 列栅格压缩设计的，弹窗里会把行挤成一团（D06M13B2 实测）。
+- 长文本（备注/描述）textarea 至少 `:autosize="{ minRows: 2, maxRows: 5 }"`。
+- **窄弹窗里的联想下拉只显示主内容**：`inksAutoComplete` 的 `:params` 第二个字段（`other`，如单号、GUID）留空，否则下拉被切成 75%/25% 两列，40% 宽度下正文直接截断（2026-11-26 D06M13B4 问题/原因分析 实测）。
+- 列表页入口与详情页签入口共用同一个 `formEdit.vue` 时，两处弹窗宽度、行距自动一致，无需各写一份样式。
+
+## 13. 联想下拉（inksAutoComplete）做必填字段的校验坑（2026-11-26 D06M13B2~B5 实测）
+
+**现象**：选中选项后仍显示「xxx为必填项」，红色错误框过一两秒才消失，甚至一直残留；用户反复反馈"选择后样式未清除"。
+
+**原因**：
+
+1. `inksAutoComplete` 不是 el-form 的表单控件，不抛 `el.form.change / el.form.blur` 语义事件；选中后的值是 JS 直接赋值，el-form 不会自动重算校验状态。
+2. 若选中后还要**异步回填真实外键**（如 D06M13B2~B5：选问题报告 → 按 probid 反查 8D → 才写 `eightdid`），下拉关闭触发 blur 的瞬间值仍为空，规则挂 `blur` 会立刻报错；异步回填完成后没有人再触发校验，错误就常驻。
+3. 表单外层 `<div @click="cleValidate(field)">` 只能兜住输入框本体的点击；下拉面板 `append-to-body` 挂在 body 上，点选项不经过外层 div，清不到校验。
+
+**标准做法**：
+
+```js
+// 1) 规则 trigger 只用 change，不要挂 blur（提交时 validate() 与 trigger 无关，必填照样拦截）
+eightdid: [{ required: true, trigger: "change", message: "8d报告为必填项" }]
+
+// 2) 选中时先清一次
+setProbRow(row) {
+  this.probText = row.billtitle || ""
+  this.cleValidate("eightdid")
+  // 3) 异步回填完成后再清一次
+  request.get(...).then((res) => {
+    this.formdata.eightdid = res.data.data.id
+    this.cleValidate("eightdid")
+  })
+}
+```
+
+**不要**改成 `el-form-item :required="true"` + 提交时 `$message.warning` 手写校验来绕开红框——会丢掉内联提示、未填时字段上没有任何错误标记，2026-11-26 试过已回退（用户要求"未填要提示"）。

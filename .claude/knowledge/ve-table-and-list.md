@@ -67,7 +67,13 @@ ve-table 批量编辑列表的枚举列（如参数类型/控制类型），用"
 ## 5. 列表"列设置"（SetColums）（参考 D11M16B1 / D11M19B1 列表，2026-09 实测）（原第 14 条）
 
 - **`<SetColums>` 是全局组件**，由平台库 `@inksyun/webcomp` 提供（main.js: `import { install } from "@inksyun/webcomp"; Vue.use(install)`），标签必须写 `<SetColums>`（大写 C），listHeader.vue 里**不需要 import、不需要 components 注册**。不要 import `@/components/Setcolums`——那是本地旧版，只有少数老页面（D11M06B1、D11M03B1、EditGroupBtns）在用；混用会让两套行为不一致。
-- **生效链路**：弹窗内改动只落在副本上 → 点"保存" POST `/system/SYSM07B9/saveByCode`（"重置"走 `/deleteByCode?code=`）→ 组件 `$emit("bindData")` → listHeader 转发 `@bindColumn` → index.vue `$refs.tableList.getColumn()` → `$getColumn` 重拉配置 → initTable 重建列。组件的 `bindData()` 里是 `JSON.parse(JSON.stringify(this.tableForm))` **深拷贝**，所以**只拨开关不点保存不会生效**；也不要写 `watch("tableForm.item")` 之类的本地监听去"实时生效"，`tableForm.item` 根本不会被改，那是死代码。
+- **生效链路**：弹窗内改动只落在副本上 → 点"保存"由组件发请求 → `$emit("bindData")` → listHeader 转发 `@bindColumn` → index.vue `$refs.tableList.getColumn()` → 重拉配置 → initTable 重建列。组件的 `bindData()` 里是 `JSON.parse(JSON.stringify(this.tableForm))` **深拷贝**，所以**只拨开关不点保存不会生效**；也不要写 `watch("tableForm.item")` 之类的本地监听去"实时生效"，`tableForm.item` 根本不会被改，那是死代码。
+- **两套保存接口不能混**（2026-11-26 D06M13B2~B5 抽屉页签实测，踩坑）：
+  - **全局 `<SetColums>`（webcomp）**：个人设置 POST `/system/SYSM07B24/save`（组件内 `userParamApi`），重置走 `/SYSM07B24/deleteByCode`；"保存默认格式 / 租户默认"仍走 SYSM07B9。
+  - **本地 `@/components/Setcolums/index.vue`**：只走 `/system/SYSM07B9/saveByCode`。
+  - 页面的列初始化若走 `$initColumns`（`src/utils/getcolumn.js`，读 **SYSM07B6 元数据 + SYSM07B24 用户设置**），**必须用全局 `<SetColums>`**。误 import 本地旧组件时保存到 SYSM07B9，`$initColumns` 永远读不到，表现为"点保存成功、列设置不生效"。
+  - 判断页面属于哪套：看 `getColumn` 里是 `$initColumns(...)`（新）还是 `/system/SYSM07B9/getBillEntityByCode`（旧）。
+- **表格上手拖的列宽要带进列设置**：ve-table 拖拽后的宽度只存在子组件 `$refs.tableList.colgroups[i]._columnResizeWidth`，不会回写列配置。打开列设置前先同步：`colgroups` 里按 `key` 取 `_columnResizeWidth`，写回 `tableForm.item[].minwidth` 再传给 `<SetColums>`，否则弹窗里显示的还是旧宽度（2026-11-26 D06M13B1 抽屉实现）。
 - **initTable 里隐藏列要直接不 push 进 customData**（`if (!item.displaymark) { columnHidden.push(...); return; }`），不要只依赖 `:columnHiddenOption`：ve-table 的 `defaultHiddenColumnKeys` 只在 `initColumns()` 里读一次，而 `initColumns()` 仅在 columns prop 变化时调用（`node_modules/vue-easytable/packages/ve-table/src/index.jsx:979`），且该数组为**空数组时不重置** hiddenColumns。参考 `D05M05M2/components/tableTh.vue` 对动态工序列的处理（displaymark=0 直接 return）。
 - **动态列**（按后端配置/字典生成的列，如 D11M19B1 的资料类型列、D05M05M2 的工序列）要能进列设置并被记住，必须**在调用 `$getColumn` 之前就并进本地列配置**（itemcode 用业务码，如 typecode），不能等 `$getColumn` 返回后再插：`src/utils/getcolumn.js` 的 `mergeColumnData` 按 itemcode 在后端配置与本地配置间对齐——后端独有的列会被丢弃、本地独有的列被追加到末尾、顺序以后端保存的顺序为准。只在返回后插入的动态列永远匹配不上后端存的 displaymark/minwidth，每次刷新都会退回默认显示。
 
