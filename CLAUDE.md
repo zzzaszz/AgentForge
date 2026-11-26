@@ -207,6 +207,7 @@ mvn clean package -DskipTests
 ## 5. 注意事项
 
 - 根目录 `D:\0-caoshi` 本身**是一个 Git 仓库**（remote `AgentForge.git`，2026-10-06 实测仅 1 个提交 `初始化AI工作区配置`，跟踪的是 AI 配置与文档，不含业务代码），各子项目又各自独立 Git（内网 GitLab `git.inksdev.com` / `192.168.99.92`）；因此改业务代码仍须 `cd` 进具体仓库，根目录的 `/review`、diff 类流程只对根仓库自身（配置/文档）有效。
+- **文档存放约定**（2026-11-26 用户确认）：未指定位置的文档（开发文档、方案总结、原型等）默认建在 `文档\` 根下，**不要直接放进 `文档\2025\` 或 `文档\2026\`**；用户验证后会自行移入对应年份目录。
 - 前端目录普遍含巨量 `node_modules`（已装约 34 处）。根目录 `.ignore` 已配置 ripgrep 忽略规则（`node_modules/`、`target/`、`dist/`、`.nuxt/` 等），**新增忽略项请改这个文件**。
 - `.claude\settings.json` 已配置只读命令白名单；deny 硬禁止 `git reset --hard` / `git clean` / `git checkout --` / `git restore` / `git push --force` / `git push -f`，以及对盘根目录的 `rm -rf`。2026-09-30 起 `node -e` / `rm` / `git commit` / `git push` 已从 ask 列表移除，改由 auto 模式判断——**这不等于已获授权**：推送前仍须明确要求，规则见本文件下方「Git 提交/推送规则」。该文件另注册了工作日志 hook（见下条）。
 - **修改代码前先拉取**（2026-09-30 用户确认）：每个涉及改代码的任务，动手前先在目标仓库检查 `git status` 与当前分支，工作区干净才 `git pull`；有未提交改动、冲突风险或拉取到新内容时，先向用户说明再继续（各子仓库独立 Git，需 `cd` 进对应仓库）。
