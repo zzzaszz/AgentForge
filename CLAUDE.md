@@ -41,6 +41,7 @@
 | **写后端"异步任务 + 前端轮询"接口、新增 Controller 接口或 mapper 方法——三段式标准样板照抄，四条编码规范先读再动手** | `.claude\knowledge\backend-async-polling.md` |
 | **表格要显示货品 SKU/SPU 属性（attributejson）、"SKU 显示""货品属性列"——标准做法照抄，列必须常驻（即使当前页无数据），先读再动手** | `.claude\knowledge\sku-attribute-columns.md` |
 | **动手改代码之前**（尤其：同一问题被反复返工、改日期/时间显示、写"改数据后刷新 UI"的逻辑）——内含动手前检查清单 | `.claude\knowledge\lessons-and-pitfalls.md` |
+| **列表页要打开另一单据的编辑/详情窗口（点行内链接/关联单号）——优先页内组件切换（v-if 全页替换，同自己单据 showEdit 模式），**不用微前端 openMicroWindow/opensub 微窗口**（删除/保存后外层刷新回调链静默失效），**路由跳转 ED 详情页慎用**（微前端内 $ismicroapp 误读 $wujie.props 导致白屏），先读再动手 | `.claude\knowledge\open-edit-window-normal-router.md` |
 
 ---
 
